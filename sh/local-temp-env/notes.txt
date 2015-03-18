@@ -1,0 +1,4 @@
+Relevant info from Austin Group:
+http://austingroupbugs.net/view.php?id=767
+
+ksh93 doesn't have local, and it has lexical scoping.
