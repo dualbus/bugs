@@ -1,0 +1,52 @@
+mawk -v CONVFMT=$(printf '%.0sx' {1..512}) 'BEGIN{print CONVFMT}'
+mawk -v CONVFMT='%s' 'BEGIN{print "3.14"+1}'
+
+
+(gdb) file bash
+Reading symbols from bash...(no debugging symbols found)...done.
+(gdb) bash -c '/tmp/11892/mawk-gO0/bin/mawk -v CONVFMT="$(cat data.bin)" BEGIN{print}'
+Undefined command: "bash".  Try "help".
+(gdb) r -c '/tmp/11892/mawk-gO0/bin/mawk -v CONVFMT="$(cat data.bin)" BEGIN{print}'
+Starting program: /bin/bash -c '/tmp/11892/mawk-gO0/bin/mawk -v CONVFMT="$(cat data.bin)" BEGIN{print}'
+process 15034 is executing new program: /tmp/11892/mawk-gO0/bin/mawk
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00007ffff777b466 in _IO_vfprintf_internal (s=s@entry=0x7fffffffccd0, format=<optimized out>, 
+    format@entry=0x63c9fc "Ω\375\200(<\264\033\364\065\256\071b\031\242%\226\004\222\263\372Re\203\326\311\324\347N}0A\210\311j\256\302\371\003\316\067\005\233\343*JG'q\177X\342\320\023Ru\340\v\260\315L\345\025\223\242\276xa\225\033\262\264\n*\301\305T\260\064\211\370\206җ\273\b\224\060\333y\266\212'[*O^\312\370.\a\002؛\vg\033\027\376\227-\362:\254~_\204\300\266G\377i\r1\325\r?M\334\031r\n\t\205$\306\326\356\350\301\365B@V\243\362~\361\374-\321XL}\270\362\216\350\371\264:\225\060~>\233\377\331\336\376v\257\034▲\274ճ\037n=o\312=*\254[9G\023SԖ\222\306\320e\241\016"..., ap=ap@entry=0x7fffffffcdf8) at vfprintf.c:2004
+2004    vfprintf.c: No such file or directory.
+(gdb) bt
+#0  0x00007ffff777b466 in _IO_vfprintf_internal (s=s@entry=0x7fffffffccd0, format=<optimized out>, 
+    format@entry=0x63c9fc "Ω\375\200(<\264\033\364\065\256\071b\031\242%\226\004\222\263\372Re\203\326\311\324\347N}0A\210\311j\256\302\371\003\316\067\005\233\343*JG'q\177X\342\320\023Ru\340\v\260\315L\345\025\223\242\276xa\225\033\262\264\n*\301\305T\260\064\211\370\206җ\273\b\224\060\333y\266\212'[*O^\312\370.\a\002؛\vg\033\027\376\227-\362:\254~_\204\300\266G\377i\r1\325\r?M\334\031r\n\t\205$\306\326\356\350\301\365B@V\243\362~\361\374-\321XL}\270\362\216\350\371\264:\225\060~>\233\377\331\336\376v\257\034▲\274ճ\037n=o\312=*\254[9G\023SԖ\222\306\320e\241\016"..., ap=ap@entry=0x7fffffffcdf8) at vfprintf.c:2004
+#1  0x00007ffff779e29b in __IO_vsprintf (
+    string=0x7fffffffcef0 "Ω\375\200(<\264\033\364\065\256\071b\031\242%\226\004\222\263\372Re\203\326\311\324\347N}0A\210\311j\256\302\371\003\316\067\005\233\343*JG'q\177X\342\320\023Ru\340\v\260\315L\345\025\223\242\276xa\225\033\262\264\n*\301\305T\260\064\211\370\206җ\273\b\224\060\333y\266\212'[*O^\312\370.\a\002؛\vg\033\027\376\227-\362:\254~_\204\300\266G\377i\r1\325\r?M\334\031r\n\t\205$\306\326\356\350\301\365B@V\243\362~\361\374-\321XL}\270\362\216\350\371\264:\225\060~>\233\377\331\336\376v\257\034▲\274ճ\037n=o\312=*\254[9G\023SԖ\222\306\320e\241\016"..., 
+    format=0x63c9fc "Ω\375\200(<\264\033\364\065\256\071b\031\242%\226\004\222\263\372Re\203\326\311\324\347N}0A\210\311j\256\302\371\003\316\067\005\233\343*JG'q\177X\342\320\023Ru\340\v\260\315L\345\025\223\242\276xa\225\033\262\264\n*\301\305T\260\064\211\370\206җ\273\b\224\060\333y\266\212'[*O^\312\370.\a\002؛\vg\033\027\376\227-\362:\254~_\204\300\266G\377i\r1\325\r?M\334\031r\n\t\205$\306\326\356\350\301\365B@V\243\362~\361\374-\321XL}\270\362\216\350\371\264:\225\060~>\233\377\331\336\376v\257\034▲\274ճ\037n=o\312=*\254[9G\023SԖ\222\306\320e\241\016"..., args=args@entry=0x7fffffffcdf8) at iovsprintf.c:42
+#2  0x00007ffff77826f7 in __sprintf (s=<optimized out>, format=<optimized out>) at sprintf.c:32
+#3  0x00000000004160e8 in field_assign (fp=0x637c08 <field+24648>, cp=0x7fffffffd140) at field.c:414
+#4  0x000000ecf128bc39 in ?? ()
+#5  0x0000007700000070 in ?? ()
+#6  0x00007fffffffd5d8 in ?? ()
+#7  0x00007fff0000007c in ?? ()
+#8  0x0000000000001294 in ?? ()
+#9  0x0000000000630002 in string_buff ()
+#10 0x000000000063c9f0 in ?? ()
+#11 0x0000000000002000 in ?? ()
+#12 0x000000000000129a in ?? ()
+#13 0x00000000006396f8 in ?? ()
+#14 0x0000001a00000000 in ?? ()
+#15 0x0000000000637c08 in field ()
+#16 0x00007fffffffd140 in ?? ()
+#17 0x0000000000639330 in ?? ()
+#18 0x0000000000000000 in ?? ()
+
+392     case OFMT_field:
+393     case CONVFMT_field:
+394     /* If the user does something stupid with OFMT or CONVFMT,
+395        we could crash.
+396        We'll make an attempt to protect ourselves here.  This is
+397        why OFMT and CONVFMT are pseudo fields.
+398 
+399        The ptrs of OFMT and CONVFMT always have a valid STRING,
+400        even if assigned a DOUBLE or NOINIT
+401      */
+
+"./field.c" 740 lines --52%-- (1 of 2)                                                                              392,10        53%

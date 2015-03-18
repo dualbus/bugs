@@ -1,0 +1,24 @@
+#!/bin/bash
+
+filter() {
+    od -t x1 -A n -v|sed 's/ /\\x/g'
+}
+
+bsh() { ~/local/bin/sh "$@"; }
+bbsh() { busybox ash "$@"; }
+
+shells=(
+bash
+bbsh
+bsh
+dash
+ksh93
+mksh
+zsh
+)
+
+for sh in "${shells[@]}"; do
+  echo "$sh"
+  </dev/fd/0 "$sh" -c 'read x; printf %s\\n "$x"'|filter
+  </dev/fd/0 "$sh" -c 'read -r x; printf %s\\n "$x"'|filter
+done <<< '\x'

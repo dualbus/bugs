@@ -1,0 +1,22 @@
+* Segmentation fault occurs because awk tries to getsval a 'vp', but
+  that vp hasn't been initialized.
+
+    'NF = 10; print'
+
+* The problem is that nawk sets NF, but it doesn't grow
+  (lib.c:growfldtab) the field table.
+
+* One solution would be to grow the field table when NF is updated.
+  nawk already does something like this when you do $fld = "", it
+  call's lib.c:newfld when a field is set via setfval/setsval.
+
+* I don't like the patch's function name. Also, I feel it's not
+  complete. In what other ways we can increase NF without re-growing
+  the field table?
+
+# buggy versions
+- openbsd awk
+- bwk's awk
+- netbsd's awk in pkgsrc
+- can't compile netbsd's awk in the base OS
+- OS X awk

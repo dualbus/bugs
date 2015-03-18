@@ -1,0 +1,216 @@
+#!/bin/bash
+
+: <<\eof
+Behavior of shells when IFS='\'
+
+The case when IFS='\' is tricky for the following situations:
+- read with -r
+- read without -r
+- a parameter expansion, unquoted, that contains the backslash
+
+You will find the behaviour of some shells at the end of this script.
+
+read
+----
+The read utility shall read a single line from standard input.
+
+By default, unless the -r option is specified, backslash ( '\' ) shall act as
+an escape character, as described in Escape Character (Backslash). If standard
+input is a terminal device and the invoking shell is interactive, read shall
+prompt for a continuation line when:
+
+The shell reads an input line ending with a backslash, unless the -r option is
+specified.
+
+A here-document is not terminated after a <newline> is entered.
+
+The line shall be split into fields as in the shell (see Field Splitting); the
+first field shall be assigned to the first variable var, the second field to
+the second variable var, and so on. If there are fewer var operands specified
+than there are fields, the leftover fields and their intervening separators
+shall be assigned to the last var. If there are fewer fields than vars, the
+remaining vars shall be set to empty strings.
+
+
+escape character (backslash)
+----------------------------
+A backslash that is not quoted shall preserve the literal value of the
+following character, with the exception of a <newline>. If a <newline> follows
+the backslash, the shell shall interpret this as line continuation. The
+backslash and <newline>s shall be removed before splitting the input into
+tokens. Since the escaped <newline> is removed entirely from the input and is
+not replaced by any white space, it cannot serve as a token separator.
+
+
+field splitting
+---------------
+
+After parameter expansion ( Parameter Expansion), command substitution (
+Command Substitution), and arithmetic expansion ( Arithmetic Expansion), the
+shell shall scan the results of expansions and substitutions that did not occur
+in double-quotes for field splitting and multiple fields can result.
+
+The shell shall treat each character of the IFS as a delimiter and use the
+delimiters to split the results of parameter expansion and command substitution
+into fields.
+
+If the value of IFS is a <space>, <tab>, and <newline>, or if it is unset, any
+sequence of <space>s, <tab>s, or <newline>s at the beginning or end of the
+input shall be ignored and any sequence of those characters within the input
+shall delimit a field. For example, the input:
+
+<newline><space><tab>foo<tab><tab>bar<space>
+
+yields two fields, foo and bar.
+
+If the value of IFS is null, no field splitting shall be performed.
+
+Otherwise, the following rules shall be applied in sequence. The term " IFS
+white space" is used to mean any sequence (zero or more instances) of white
+space characters that are in the IFS value (for example, if IFS contains
+<space>/ <comma>/ <tab>, any sequence of <space>s and <tab>s is considered IFS
+white space).
+
+IFS white space shall be ignored at the beginning and end of the input.
+
+Each occurrence in the input of an IFS character that is not IFS white space,
+along with any adjacent IFS white space, shall delimit a field, as described
+previously.
+
+Non-zero-length IFS white space shall delimit a field.
+
+
+references
+----------
+- read:
+ http://pubs.opengroup.org/onlinepubs/009695399/utilities/read.html
+- escape character:
+ http://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html#tag_02_02_01
+- field splitting:
+ http://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html#tag_02_06_05
+eof
+
+
+bbsh(){ busybox ash "$@"; }
+bsh() { ~/local/bin/sh "$@"; } # heirloom
+zsh() { command zsh -o shwordsplit "$@"; }
+
+cases=(
+'IFS=\\ read f; printf %s\\n "$f"'
+'IFS=\\ read f g; printf %s\\n "$f"'
+'IFS=\\ read f g; printf %s\\n "$g"'
+'IFS=\\ read -r f; printf %s\\n "$f"'
+'IFS=\\ read -r f g; printf %s\\n "$f"'
+'IFS=\\ read -r f g; printf %s\\n "$g"'
+'IFS=\\ a=\<\\\>; printf %s\\n $a'
+'IFS=: b=\<:\>; printf %s\\n $b'
+)
+
+if [[ $extended ]]; then
+cases+=(
+'IFS=\\ read -r -d "" f g; printf %s\\n "$g"'
+)
+fi
+
+shells=(
+bash
+ksh93
+mksh
+zsh
+)
+if [[ ! $extended ]]; then
+shells+=(
+bbsh
+bsh
+dash
+)
+fi
+
+inputs=(
+ '<\>'
+ '<\\>'
+$'<\\\n>'
+)
+
+doit() {
+  local code sh input result
+  code=$1 sh=$2 input=$3
+
+  result=$(
+    if [[ $input ]]; then
+      "$sh" -c "$code" <<< "$input"
+    else
+      "$sh" -c "$code"
+    fi
+    printf x
+  )
+  result=${result%??} # echo's newline and the 'x'
+
+  # ASCII US: 037
+  printf '%s\037%s\037%s\037%s\n' "$code" "$sh" \
+    "${result//$'\n'/^J}" "${input//$'\n'/^J}" 
+}
+
+for code in "${cases[@]}"; do
+  hasinput=
+  [[ $code = *' read '* ]] && hasinput=y
+
+  if [[ $hasinput ]]; then
+    for input in "${inputs[@]}"; do
+      for sh in "${shells[@]}"; do
+        doit "$code" "$sh" "$input"
+      done
+    done
+  else
+    for sh in "${shells[@]}"; do
+      doit "$code" "$sh"
+    done
+  fi
+done | {
+  declare -A results rows
+
+  while IFS=$'\037' read -r code sh result input; do
+      if [[ $input ]]; then
+      rows[$code' # '$input]=y
+      results[$code' # '$input|$sh]=$result
+      else
+      rows[$code]=y
+      results[$code|$sh]=$result
+      fi
+  done
+
+  printf '%s\037%s\037' - 'code [ # input ]'
+  for sh in "${shells[@]}"; do
+    printf '%s\037' "$sh"
+  done; printf \\n
+
+  for row in "${!rows[@]}"; do
+    printf '%s\037' "$row"
+    for sh in "${shells[@]}"; do
+      printf '%s\037' "${results[$row|$sh]}"
+    done
+    printf \\n
+  done|sort|awk '{print NR"\037"$0}'
+} | column -s $'\037' -nt | sed 's/^/# /'
+
+# -   code [ # input ]                               bash  ksh93  mksh  zsh   bbsh  bsh   dash  
+# 1   IFS=\\ a=\<\\\>; printf %s\\n $a               <^J>  <^J>   <^J>  <^J>  <^J>  <\>   <^J>  
+# 2   IFS=: b=\<:\>; printf %s\\n $b                 <^J>  <^J>   <^J>  <^J>  <^J>  <^J>  <^J>  
+# 3   IFS=\\ read f g; printf %s\\n "$f" # <\>       <>    <      <     <     <>    <     <>    
+# 4   IFS=\\ read f g; printf %s\\n "$f" # <\\>      <\>   <      <     <     <\>   <     <\>   
+# 5   IFS=\\ read f g; printf %s\\n "$f" # <\^J>     <>    <      <>    <     <>    <>    <>    
+# 6   IFS=\\ read f g; printf %s\\n "$g" # <\>             >      >     >           >           
+# 7   IFS=\\ read f g; printf %s\\n "$g" # <\\>            \>     \>    >           >           
+# 8   IFS=\\ read f g; printf %s\\n "$g" # <\^J>                                                
+# 9   IFS=\\ read f; printf %s\\n "$f" # <\>         <>    <\>    <\>   <>    <>    <>    <>    
+# 10  IFS=\\ read f; printf %s\\n "$f" # <\\>        <\>   <\\>   <\\>  <\>   <\>   <\>   <\>   
+# 11  IFS=\\ read f; printf %s\\n "$f" # <\^J>       <>    <      <>    <>    <>    <>    <>    
+# 12  IFS=\\ read -r f g; printf %s\\n "$f" # <\>    <     <      <     <     <     <     <     
+# 13  IFS=\\ read -r f g; printf %s\\n "$f" # <\\>   <     <      <     <     <     <     <     
+# 14  IFS=\\ read -r f g; printf %s\\n "$f" # <\^J>  <     <      <     <     <     <     <     
+# 15  IFS=\\ read -r f g; printf %s\\n "$g" # <\>    >     >      >     >     >     >     >     
+# 16  IFS=\\ read -r f g; printf %s\\n "$g" # <\\>   \>    \>     \>    \>    \>    >     \>    
+# 17  IFS=\\ read -r f g; printf %s\\n "$g" # <\^J>                                             
+# 18  IFS=\\ read -r f; printf %s\\n "$f" # <\>      <\>   <\>    <\>   <\>   <\>   <\>   <\>   
+# 19  IFS=\\ read -r f; printf %s\\n "$f" # <\\>     <\\>  <\\>   <\\>  <\\>  <\\>  <\\>  <\\>  
+# 20  IFS=\\ read -r f; printf %s\\n "$f" # <\^J>    <     <      <     <\    <\    <     <     

@@ -1,0 +1,23 @@
+#0  __find_specmb (format=0x416a9c "%ld") at printf-parse.h:108
+#1  _IO_vfprintf_internal (s=s@entry=0x7fff504e2550, format=format@entry=0x416a9c "%ld", ap=ap@entry=0x7fff504e2710)
+    at vfprintf.c:1309
+#2  0x00007f76e84c4299 in _IO_vsnprintf (string=0x1b076c8 "", maxlen=<optimized out>, format=0x416a9c "%ld", args=0x7fff504e2710)
+    at vsnprintf.c:119
+#3  0x000000000041293c in xvsnprintf (outbuf=0x1b076c8 "", length=32, fmt=0x416a9c "%ld", ap=0x7fff504e2710) at output.c:396
+#4  0x0000000000412715 in fmtstr (outbuf=0x1b076c8 "", length=32, fmt=0x416a9c "%ld") at output.c:280
+#5  0x00000000004093c5 in cvtnum (num=19760) at expand.c:1698
+#6  0x0000000000407f69 in varvalue (name=0x1b0766a "$=", varflags=1, flags=1) at expand.c:928
+#7  0x0000000000407a8d in evalvar (p=0x1b0766c "", flag=1) at expand.c:739
+#8  0x0000000000406f9b in argstr (p=0x1b07669 "\001$=", flag=1) at expand.c:347
+#9  0x0000000000406beb in expandarg (arg=0x1b07670, arglist=0x7fff504e29c0, flag=3) at expand.c:193
+#10 0x0000000000404b28 in evalcommand (cmd=0x1b07690, flags=0) at eval.c:714
+#11 0x0000000000403f4b in evaltree (n=0x1b07690, flags=0) at eval.c:280
+#12 0x0000000000403d06 in evalstring (s=0x11f7560 "kill $$", flags=0) at eval.c:168
+#13 0x000000000041208c in dotrap () at trap.c:331
+#14 0x0000000000403fe0 in evaltree (n=0x1b07620, flags=0) at eval.c:309
+#15 0x0000000000403d06 in evalstring (s=0x11f7560 "kill $$", flags=0) at eval.c:168
+#16 0x000000000041208c in dotrap () at trap.c:331
+#17 0x0000000000403fe0 in evaltree (n=0x1b075b0, flags=0) at eval.c:309
+#18 0x0000000000403d06 in evalstring (s=0x11f7560 "kill $$", flags=0) at eval.c:168
+#19 0x000000000041208c in dotrap () at trap.c:331
+    [...]

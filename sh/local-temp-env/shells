@@ -1,0 +1,7 @@
+dualbus@hp ~ % for sh in bash dash ksh93 mksh zsh; do $sh -c 'f() { x=4; local x; echo $x; }; f'; done    
+
+4
+ksh93: local: not found [No such file or directory]
+4
+
+

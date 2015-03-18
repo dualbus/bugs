@@ -1,0 +1,68 @@
+diff -ruN nawk.orig/lib.c nawk/lib.c
+--- nawk.orig/lib.c	Wed Aug 10 18:18:15 2011
++++ nawk/lib.c	Tue Nov 11 23:41:15 2014
+@@ -380,11 +380,16 @@
+ 
+ void newfld(int n)	/* add field n after end of existing lastfld */
+ {
++	newfldnosetnf(n);
++	setfval(nfloc, (Awkfloat) n);
++}
++
++void newfldnosetnf(int n)
++{
+ 	if (n > nfields)
+ 		growfldtab(n);
+ 	cleanfld(lastfld+1, n);
+ 	lastfld = n;
+-	setfval(nfloc, (Awkfloat) n);
+ }
+ 
+ Cell *fieldadr(int n)	/* get nth field */
+diff -ruN nawk.orig/makefile nawk/makefile
+--- nawk.orig/makefile	Thu Dec 20 07:58:45 2012
++++ nawk/makefile	Tue Nov 11 22:40:52 2014
+@@ -24,7 +24,7 @@
+ 
+ CFLAGS = -g
+ CFLAGS = -O2
+-CFLAGS =
++CFLAGS = -g -O0
+ 
+ CC = gcc -Wall -g -Wwrite-strings
+ CC = gcc -fprofile-arcs -ftest-coverage # then gcov f1.c; cat f1.c.gcov
+@@ -32,9 +32,7 @@
+ CC = gcc -O4 -Wall -pedantic -fno-strict-aliasing
+ 
+ YACC = bison -d -y
+-YACC = yacc -d -S
+-#YFLAGS = -d -S
+-		# -S uses sprintf in yacc parser instead of sprint
++YACC = yacc -d
+ 
+ OFILES = b.o main.o parse.o proctab.o tran.o lib.o run.o lex.o
+ 
+diff -ruN nawk.orig/tran.c nawk/tran.c
+--- nawk.orig/tran.c	Thu Dec 20 07:58:07 2012
++++ nawk/tran.c	Tue Nov 11 23:41:50 2014
+@@ -280,7 +280,7 @@
+ 
+ Awkfloat setfval(Cell *vp, Awkfloat f)	/* set float val of a Cell */
+ {
+-	int fldno;
++	int fldno, n;
+ 
+ 	if ((vp->tval & (NUM | STR)) == 0) 
+ 		funnyvar(vp, "assign to");
+@@ -293,6 +293,11 @@
+ 	} else if (isrec(vp)) {
+ 		donefld = 0;	/* mark $1... invalid */
+ 		donerec = 1;
++	} else if (strcmp(vp->nval, "NF") == 0) {
++		n = (int)f;
++		if (n > *NF) {
++			newfldnosetnf(n);
++		}
+ 	}
+ 	if (freeable(vp))
+ 		xfree(vp->sval); /* free any previous string */

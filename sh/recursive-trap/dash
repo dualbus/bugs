@@ -1,0 +1,6 @@
+#!/bin/sh
+
+for sh in dash bash mksh 'busybox sh'; do
+    echo "$sh"
+    $sh -c 'trap "kill -TERM \$\$" TERM; kill -TERM $$'
+done

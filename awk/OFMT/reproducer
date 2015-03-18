@@ -1,0 +1,1 @@
+mawk -v OFMT='%s%s%s%s' 'BEGIN{print 3.14}'

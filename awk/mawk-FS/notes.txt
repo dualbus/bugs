@@ -1,0 +1,4 @@
+% ./mawk -F$'0[[:\303]'
+zsh: segmentation fault  ./mawk -F$'0[[:\303]'
+
+Beware, gdb's print will show that as "0", use x/6pb, or something like that.
